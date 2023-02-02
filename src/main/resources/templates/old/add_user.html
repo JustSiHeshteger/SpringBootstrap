@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:security="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Добавить пользователя</title>
+</head>
+<body>
+<h2>Добавить пользователя</h2>
+<div>
+    <form th:action="@{/admin/add}" th:object="${user}" method="post">
+        <fieldset>
+            <legend>Данные пользователя</legend>
+            <p>
+                <label th:for="firstName">Имя</label>
+                <input type="text" name="firstName" th:id="firstName" th:value="${user.getFirstName()}">
+            </p>
+            <p>
+                <label th:for="secondName">Фамилия</label>
+                <input type="text" name="secondName" th:id="secondName" th:value="${user.getSecondName()}"><br/>
+
+            </p>
+            <p>
+                <label th:for="username">Имя аккаунта</label>
+                <input type="text" name="username" th:id="username" th:value="${user.getUsername()}"><br/>
+            </p>
+            <p>
+                <label th:for="password">Пароль</label>
+                <input type="text" name="password" th:id="password" th:value="${user.getPassword()}"><br/>
+            </p>
+        </fieldset>
+        <button type="submit">Сохранить пользователя</button>
+    </form>
+    <br/>
+
+    <form th:action="@{/admin}">
+        <button type="submit" class="btn btn-outline-danger">Назад к списку пользователей</button>
+    </form>
+
+</div>
+</body>
+</html>

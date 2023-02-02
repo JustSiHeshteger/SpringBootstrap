@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Запрошенный юзер</title>
+</head>
+<body>
+<div>
+  <table>
+    <tr>
+      <th>Id</th>
+      <th>Имя</th>
+      <th>Фамилия</th>
+      <th>Имя аккаунта</th>
+      <th>Роль</th>
+    </tr>
+
+    <tr th:action="@{/user}" th:object="${user}" th:method="get">
+      <td th:text="${user.getId()}">Id</td>
+      <td th:text="${user.getFirstName()}">Имя</td>
+      <td th:text="${user.getSecondName()}">Фамилия</td>
+      <td th:text="${user.getUsername()}">Имя аккаунта</td>
+      <td th:text="${user.getRoles()}">Роль</td>
+    </tr>
+
+  </table>
+  <form th:action="@{/logout}">
+    <button type="submit">Выход</button>
+  </form>
+</div>
+</body>
+</html>
+
