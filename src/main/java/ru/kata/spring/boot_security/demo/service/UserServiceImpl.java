@@ -1,6 +1,8 @@
 package ru.kata.spring.boot_security.demo.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -13,19 +15,18 @@ import ru.kata.spring.boot_security.demo.model.User;
 
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final RoleRepository roleRepository;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder PasswordEncoder, RoleRepository roleRepository) {
+    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder PasswordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = PasswordEncoder;
-        this.roleRepository = roleRepository;
     }
 
     @Override
@@ -40,25 +41,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void saveUserForDatabaseInitializer(User user) {
-        user.setFirstName(user.getFirstName());
+    public void saveUser(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userRepository.save(user);
-    }
-
-    @Override
-    @Transactional
-    public void saveUserWithRoles(User user, Long[] rolesId) {
-        Set<Role> roles = new HashSet<>();
-
-        for (int i = 0; i < rolesId.length; i++) {
-            roles.add(roleRepository.findRoleById(rolesId[i]));
-        }
-
-        /*user.setFirstName(user.getFirstName());
-        user.setSecondName(user.getSecondName());*/
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRoles(roles);
         userRepository.save(user);
     }
 
@@ -69,40 +53,31 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getUserById(Long id) {
-        return userRepository.findById(id).get();
-    }
-
-    @Override
-    public List<Role> getAllRoles() {
-        return roleRepository.findAll();
-    }
-
-    @Override
-    public void updateUserWithRoles(User user, Long[] rolesId) {
-        Set<Role> setOfRoles = new HashSet<>();
-
-        for (int i = 0; i < rolesId.length; i++) {
-            setOfRoles.add(roleRepository.findRoleById(rolesId[i]));
-        }
-
+    public void updateUser(User user) {
         if (user.getPassword().startsWith("$2a$10$") && user.getPassword().length() == 60) {
             user.setPassword(user.getPassword());
         } else {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
 
-        user.setRoles(setOfRoles);
         userRepository.save(user);
     }
 
+    @Transactional
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.getUserByUsername(username);
+
         if (user == null) {
-            throw new UsernameNotFoundException("User not found.");
+            throw new UsernameNotFoundException(String.format("User not found", username));
         }
-        return user;
+
+        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(),
+                mapRolesToAuthorities(user.getRoles()));
+    }
+
+    private Collection<? extends GrantedAuthority> mapRolesToAuthorities(Set<Role> roles) {
+        return roles.stream().map(r -> new SimpleGrantedAuthority(r.getRoleType())).collect(Collectors.toList());
     }
 }
 

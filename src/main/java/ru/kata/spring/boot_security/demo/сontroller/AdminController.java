@@ -17,31 +17,31 @@ import java.security.Principal;
 public class AdminController {
 
     private final UserService userService;
+    private final RoleService roleService;
     private final BCryptPasswordEncoder passwordEncoder;
 
     @Autowired
     public AdminController(UserService userService, BCryptPasswordEncoder passwordEncoder, RoleService roleService) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
+        this.roleService = roleService;
     }
 
     @GetMapping
-    public String openAdminPanel(Model model) {
-        User user = (User) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
+    public String getAdminPage(@ModelAttribute("user") User user,
+                               Model model, Principal principal) {
 
         model.addAttribute("allUsers", userService.getAllUsers());
-        model.addAttribute("allRoles", userService.getAllRoles());
-        model.addAttribute("admin", user);
+        model.addAttribute("allRoles", roleService.getAllRoles());
+        model.addAttribute("admin", userService.getUserByUsername(principal.getName()));
 
         return "admin_page";
     }
 
     @PostMapping(value = "/new")
     public String addNewUserToDb(User user, @RequestParam("listRoles") Long[] id) {
-        userService.saveUserWithRoles(user, id);
+        user.setRoles(roleService.findAllRolesById(id));
+        userService.saveUser(user);
         return "redirect:/admin";
     }
 
@@ -52,13 +52,14 @@ public class AdminController {
     }
 
     @PostMapping(value = "/edit")
-    public String saveEditedUserToDb(@ModelAttribute("user") User user, @RequestParam("roles") Long[] roleId) {
-        userService.updateUserWithRoles(user, roleId);
+    public String saveEditedUserToDb(@ModelAttribute("user") User user, @RequestParam("roles") Long[] id) {
+        user.setRoles(roleService.findAllRolesById(id));
+        userService.updateUser(user);
         return "redirect:/admin";
     }
 
     @GetMapping("/info")
-    public String openInfoAboutAdmin(Model model, Principal principal) {
+    public String ogetInfoAboutAdmin(Model model, Principal principal) {
         model.addAttribute("user", userService.getUserByUsername(principal.getName()));
         return "admin_page_info";
     }
